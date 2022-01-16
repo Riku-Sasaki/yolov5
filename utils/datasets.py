@@ -6,7 +6,6 @@ Dataloaders and dataset utils
 import glob
 import hashlib
 import json
-import math
 import os
 import random
 import shutil
@@ -309,9 +308,8 @@ class LoadStreams:
             assert cap.isOpened(), f'{st}Failed to open {s}'
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            fps = cap.get(cv2.CAP_PROP_FPS)  # warning: may return 0 or nan
+            self.fps[i] = max(cap.get(cv2.CAP_PROP_FPS) % 100, 0) or 30.0  # 30 FPS fallback
             self.frames[i] = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 0) or float('inf')  # infinite stream fallback
-            self.fps[i] = max((fps if math.isfinite(fps) else 0) % 100, 0) or 30  # 30 FPS fallback
 
             _, self.imgs[i] = cap.read()  # guarantee first frame
             self.threads[i] = Thread(target=self.update, args=([i, cap, s]), daemon=True)
@@ -371,8 +369,10 @@ class LoadStreams:
 
 def img2label_paths(img_paths):
     # Define label paths as a function of image paths
-    sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
-    return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+    #sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
+    #return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+    res = [img_path.replace("train2017", "annotations_yolov5/labels").replace("val2017", "annotations_yolov5/labels").replace(".jpg", ".txt") for img_path in img_paths]
+    return res
 
 
 class LoadImagesAndLabels(Dataset):
